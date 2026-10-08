@@ -310,6 +310,7 @@ select {
         Spice level
         <select id="difficulty">
           <option value="easy">Leve (Easy)</option>
+          <option value="medium">Medio (Medium)</option>
           <option value="hard">Picante (Hard)</option>
         </select>
       </label>
@@ -389,7 +390,7 @@ const state = {
   gameOver: false,
   cpuThinking: false,
   mode: 'pvp',         // 'pvp' | 'cpu'
-  difficulty: 'easy',  // 'easy' | 'hard'
+  difficulty: 'easy',  // 'easy' | 'medium' | 'hard'
   scores: { X: 0, O: 0, draw: 0 },
 };
 
@@ -440,11 +441,33 @@ function minimax(board, player, depth) {
   return best;
 }
 
+/** Returns an empty cell that would complete three in a row for `player`, or -1. */
+function findWinningMove(board, player) {
+  for (const i of emptyCells(board)) {
+    const next = [...board];
+    next[i] = player;
+    const result = checkWinner(next);
+    if (result && result !== 'draw') return i;
+  }
+  return -1;
+}
+
 function pickCpuMove() {
   const empty = emptyCells(state.board);
-  if (state.difficulty === 'easy') {
-    return empty[Math.floor(Math.random() * empty.length)];
+  const randomMove = () => empty[Math.floor(Math.random() * empty.length)];
+
+  if (state.difficulty === 'easy') return randomMove();
+
+  if (state.difficulty === 'medium') {
+    // Take a win, otherwise block the player's win, otherwise play randomly.
+    // It doesn't plan ahead, so it can still be beaten with a fork.
+    const win = findWinningMove(state.board, CPU);
+    if (win !== -1) return win;
+    const block = findWinningMove(state.board, HUMAN);
+    if (block !== -1) return block;
+    return randomMove();
   }
+
   return minimax([...state.board], CPU, 0).index;
 }
 
@@ -505,7 +528,7 @@ function resetScores() {
 function statusText(result) {
   if (result === 'draw') return 'Draw! Pass the salsa.';
   if (result) {
-    if (state.mode === 'cpu') return result.winner === HUMAN ? 'You win! ¡Olé! 🎉' : 'The Computer wins!';
+    if (state.mode === 'cpu') return result.winner === HUMAN ? 'You win! ¡Olé! 🎉' : '¡Ay, caramba! The Computer wins.';
     return `${NAMES[result.winner]}s win! ¡Olé! 🎉`;
   }
   if (state.cpuThinking) return 'Computer is cooking…';
