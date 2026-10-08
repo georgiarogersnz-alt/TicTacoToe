@@ -9,6 +9,7 @@ Tacos vs. tortillas. Three in a row wins the fiesta.
 - **2 Players**: two people take turns on the same device.
 - **Vs Computer**: you play tacos and go first. There are two spice levels:
   - **Leve (Easy)**: the computer makes random moves.
+  - **Medio (Medium)**: the computer takes a winning move or blocks yours when it sees one, but it doesn't plan ahead, so you can beat it with a fork.
   - **Picante (Hard)**: the computer looks ahead with the minimax algorithm and can never be beaten.
 - Hand-drawn SVG taco and tortilla pieces, a terracotta comal board and a papel picado banner.
 - A running scoreboard, highlighting for the winning line, light and dark themes, and a layout that works on phones.
