@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Taco Toe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg: #fff4dc;            /* masa cream */
+  --bg-dot: #f6e2b5;
+  --surface: #fffaf0;
+  --text: #4a2511;          /* mole brown */
+  --muted: #8a5a3b;
+  --border: #e8c98f;
+  --taco: #e8901c;          /* shell gold */
+  --tortilla: #b07a3a;      /* toasted tortilla */
+  --salsa: #d63a1f;
+  --salsa-text: #fffaf0;
+  --lime: #5aa832;
+  --comal: #c4532d;         /* terracotta */
+  --comal-edge: #9c3d1f;
+  --cell: #fff6e3;
+  --cell-hover: #ffe9bf;
+  --win-bg: #dff3c9;
+  --picado-1: #e8396b;
+  --picado-2: #f2a516;
+  --picado-3: #34a6a0;
+  --picado-4: #8d4cc4;
+  --picado-5: #5aa832;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #23140c;
+    --bg-dot: #2e1c11;
+    --surface: #33200f;
+    --text: #fbe9c6;
+    --muted: #c9a179;
+    --border: #5a3a20;
+    --taco: #f4b740;
+    --tortilla: #e0b06e;
+    --salsa: #ef5a3a;
+    --salsa-text: #23140c;
+    --lime: #86cf5a;
+    --comal: #5c2a17;
+    --comal-edge: #3e1b0d;
+    --cell: #3d2717;
+    --cell-hover: #4b311d;
+    --win-bg: #3d5424;
+  }
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 0 16px 40px;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--bg-dot) 2px, transparent 2px);
+  background-size: 22px 22px;
+  color: var(--text);
+  font-family: "Nunito", system-ui, sans-serif;
+}
+
+/* ---------- Papel picado banner ---------- */
+.papel-picado {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 10px;
+  margin: 0 -16px 8px;
+  border-top: 3px solid var(--muted);
+  overflow: hidden;
+}
+
+.papel-picado span {
+  flex: 0 0 auto;
+  width: clamp(34px, 9vw, 54px);
+  height: clamp(42px, 11vw, 64px);
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 87% 100%, 75% 82%, 62% 100%, 50% 82%, 37% 100%, 25% 82%, 12% 100%, 0 82%);
+  -webkit-mask: radial-gradient(circle at 50% 42%, transparent 6px, #000 7px);
+          mask: radial-gradient(circle at 50% 42%, transparent 6px, #000 7px);
+  transform-origin: top center;
+  animation: flutter 3s ease-in-out infinite;
+}
+
+.papel-picado span:nth-child(5n+1) { background: var(--picado-1); }
+.papel-picado span:nth-child(5n+2) { background: var(--picado-2); animation-delay: -0.6s; }
+.papel-picado span:nth-child(5n+3) { background: var(--picado-3); animation-delay: -1.2s; }
+.papel-picado span:nth-child(5n+4) { background: var(--picado-4); animation-delay: -1.8s; }
+.papel-picado span:nth-child(5n+5) { background: var(--picado-5); animation-delay: -2.4s; }
+
+@keyframes flutter {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ---------- Layout ---------- */
+.game {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+h1 {
+  margin: 8px 0 4px;
+  font-family: "Lilita One", "Nunito", sans-serif;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 10vw, 3rem);
+  letter-spacing: 0.01em;
+  color: var(--salsa);
+  text-shadow: 3px 3px 0 var(--taco);
+}
+
+h1 .tac { color: var(--lime); }
+
+.tagline {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: left;
+}
+
+select {
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 7px 10px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 0 0 14px;
+  font-family: "Lilita One", "Nunito", sans-serif;
+  font-size: 1.35rem;
+  color: var(--text);
+}
+
+/* ---------- Board (a hot terracotta comal) ---------- */
+.comal {
+  padding: 12px;
+  margin: 0 auto 20px;
+  border-radius: 24px;
+  background: var(--comal);
+  box-shadow: inset 0 -6px 0 var(--comal-edge), 0 10px 24px rgba(74, 37, 17, 0.25);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  aspect-ratio: 1;
+}
+
+.cell {
+  aspect-ratio: 1;
+  padding: 10%;
+  border: none;
+  border-radius: 50%;          /* little plates */
+  background: var(--cell);
+  box-shadow: inset 0 0 0 5px var(--border), 0 3px 0 var(--comal-edge);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.cell:hover:not(:disabled) { background: var(--cell-hover); }
+.cell:active:not(:disabled) { transform: scale(0.95); }
+.cell:disabled { cursor: default; }
+.cell:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+
+.cell svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: plop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cell.win {
+  background: var(--win-bg);
+  box-shadow: inset 0 0 0 5px var(--lime), 0 3px 0 var(--comal-edge);
+}
+
+.cell.win svg { animation: wiggle 0.6s ease-in-out infinite; }
+
+@keyframes plop {
+  from { transform: scale(0.2) rotate(-25deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-8deg) scale(1.05); }
+  50%      { transform: rotate(8deg) scale(1.05); }
+}
+
+/* ---------- Scores & buttons ---------- */
+.scores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.score strong {
+  font-family: "Lilita One", "Nunito", sans-serif;
+  font-weight: 400;
+  font-size: 1.6rem;
+  color: var(--text);
+}
+
+.score.x span { color: var(--taco); }
+.score.o span { color: var(--tortilla); }
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 800;
+  padding: 11px 20px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.btn:active { transform: translateY(2px); }
+
+.btn.primary {
+  background: var(--salsa);
+  border-color: var(--salsa);
+  color: var(--salsa-text);
+  box-shadow: 0 3px 0 var(--comal-edge);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .papel-picado span, .cell svg, .cell.win svg { animation: none; }
+}
+  </style>
+</head>
+<body>
+  <div class="papel-picado" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <main class="game">
+    <h1>Tic <span class="tac">Taco</span> Toe</h1>
+    <p class="tagline">Tacos vs. tortillas. Three in a row wins the fiesta.</p>
+
+    <div class="controls">
+      <label>
+        Mode
+        <select id="mode">
+          <option value="pvp">2 Players</option>
+          <option value="cpu">Vs Computer</option>
+        </select>
+      </label>
+      <label id="difficulty-wrap" hidden>
+        Spice level
+        <select id="difficulty">
+          <option value="easy">Leve (Easy)</option>
+          <option value="hard">Picante (Hard)</option>
+        </select>
+      </label>
+    </div>
+
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <div class="comal">
+      <div id="board" class="board" role="grid" aria-label="Tic Taco Toe board"></div>
+    </div>
+
+    <div class="scores">
+      <div class="score x"><span id="score-x-label">Tacos</span><strong id="score-x">0</strong></div>
+      <div class="score draw"><span>Draws</span><strong id="score-draw">0</strong></div>
+      <div class="score o"><span id="score-o-label">Tortillas</span><strong id="score-o">0</strong></div>
+    </div>
+
+    <div class="actions">
+      <button id="restart" class="btn primary">New Round</button>
+      <button id="reset-scores" class="btn">Reset Scores</button>
+    </div>
+  </main>
+
+  <script>
+// All 8 ways to get three in a row (board indexes 0-8, left-to-right, top-to-bottom)
+const WIN_LINES = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+  [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+  [0, 4, 8], [2, 4, 6],            // diagonals
+];
+
+const HUMAN = 'X';
+const CPU = 'O';
+const CPU_DELAY_MS = 400;
+
+// X is played by tacos, O by tortillas
+const NAMES = { X: 'Taco', O: 'Tortilla' };
+
+const PIECES = {
+  X: `<svg viewBox="0 0 100 100" aria-hidden="true">
+    <!-- fillings -->
+    <circle cx="22" cy="46" r="9" fill="#5aa832"/>
+    <circle cx="36" cy="40" r="10" fill="#6cc040"/>
+    <circle cx="52" cy="38" r="10" fill="#5aa832"/>
+    <circle cx="67" cy="40" r="10" fill="#6cc040"/>
+    <circle cx="80" cy="46" r="9" fill="#5aa832"/>
+    <circle cx="30" cy="42" r="5.5" fill="#d63a1f"/>
+    <circle cx="58" cy="35" r="5.5" fill="#d63a1f"/>
+    <circle cx="74" cy="42" r="5" fill="#d63a1f"/>
+    <rect x="40" y="33" width="10" height="4" rx="2" fill="#ffd34d" transform="rotate(-20 45 35)"/>
+    <rect x="62" y="36" width="9" height="4" rx="2" fill="#ffd34d" transform="rotate(25 66 38)"/>
+    <circle cx="45" cy="44" r="4" fill="#fffaf0"/>
+    <!-- shell -->
+    <path d="M8 48 A42 42 0 0 0 92 48 Z" fill="#f4b740" stroke="#c47f17" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M18 56 A33 33 0 0 0 82 56" fill="none" stroke="#e39a25" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="35" cy="68" r="2.5" fill="#c47f17"/>
+    <circle cx="58" cy="74" r="2" fill="#c47f17"/>
+    <circle cx="68" cy="62" r="2.5" fill="#c47f17"/>
+    <circle cx="47" cy="61" r="1.8" fill="#c47f17"/>
+  </svg>`,
+  O: `<svg viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="42" fill="#f6dfa4" stroke="#d9b26a" stroke-width="3"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#efd08a" stroke-width="2"/>
+    <ellipse cx="34" cy="34" rx="6" ry="4" fill="#a8692c" opacity="0.55"/>
+    <ellipse cx="64" cy="30" rx="4" ry="3" fill="#a8692c" opacity="0.5"/>
+    <ellipse cx="70" cy="58" rx="7" ry="4.5" fill="#a8692c" opacity="0.5" transform="rotate(30 70 58)"/>
+    <ellipse cx="40" cy="66" rx="5" ry="3.5" fill="#a8692c" opacity="0.55"/>
+    <ellipse cx="54" cy="48" rx="3" ry="2" fill="#a8692c" opacity="0.45"/>
+    <ellipse cx="26" cy="54" rx="3" ry="2.5" fill="#a8692c" opacity="0.45"/>
+    <ellipse cx="58" cy="76" rx="3.5" ry="2.5" fill="#a8692c" opacity="0.45"/>
+  </svg>`,
+};
+
+const state = {
+  board: Array(9).fill(null),
+  current: 'X',
+  gameOver: false,
+  cpuThinking: false,
+  mode: 'pvp',         // 'pvp' | 'cpu'
+  difficulty: 'easy',  // 'easy' | 'hard'
+  scores: { X: 0, O: 0, draw: 0 },
+};
+
+let cpuTimer = null;
+
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const modeEl = document.getElementById('mode');
+const difficultyEl = document.getElementById('difficulty');
+const difficultyWrap = document.getElementById('difficulty-wrap');
+const cells = [];
+
+// ---------- Game logic ----------
+
+/** Returns { winner, line } for a win, 'draw' for a full board, or null if the game continues. */
+function checkWinner(board) {
+  for (const line of WIN_LINES) {
+    const [a, b, c] = line;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return { winner: board[a], line };
+    }
+  }
+  return board.every(Boolean) ? 'draw' : null;
+}
+
+function emptyCells(board) {
+  return board.reduce((acc, v, i) => (v ? acc : [...acc, i]), []);
+}
+
+/**
+ * Minimax: scores the board from the CPU's point of view.
+ * Faster wins score higher and slower losses score less badly (via depth).
+ */
+function minimax(board, player, depth) {
+  const result = checkWinner(board);
+  if (result === 'draw') return { score: 0 };
+  if (result) return { score: result.winner === CPU ? 10 - depth : depth - 10 };
+
+  let best = { score: player === CPU ? -Infinity : Infinity, index: -1 };
+  for (const i of emptyCells(board)) {
+    board[i] = player;
+    const { score } = minimax(board, player === CPU ? HUMAN : CPU, depth + 1);
+    board[i] = null;
+    if (player === CPU ? score > best.score : score < best.score) {
+      best = { score, index: i };
+    }
+  }
+  return best;
+}
+
+function pickCpuMove() {
+  const empty = emptyCells(state.board);
+  if (state.difficulty === 'easy') {
+    return empty[Math.floor(Math.random() * empty.length)];
+  }
+  return minimax([...state.board], CPU, 0).index;
+}
+
+// ---------- Turn handling ----------
+
+function placeMark(i) {
+  state.board[i] = state.current;
+  const result = checkWinner(state.board);
+
+  if (result) {
+    state.gameOver = true;
+    if (result === 'draw') {
+      state.scores.draw++;
+    } else {
+      state.scores[result.winner]++;
+      result.line.forEach((idx) => cells[idx].classList.add('win'));
+    }
+    render(result);
+    return;
+  }
+
+  state.current = state.current === 'X' ? 'O' : 'X';
+  render(null);
+}
+
+function handleCellClick(i) {
+  if (state.gameOver || state.cpuThinking || state.board[i]) return;
+
+  placeMark(i);
+
+  if (state.mode === 'cpu' && !state.gameOver && state.current === CPU) {
+    state.cpuThinking = true;
+    render(null);
+    cpuTimer = setTimeout(() => {
+      state.cpuThinking = false;
+      placeMark(pickCpuMove());
+    }, CPU_DELAY_MS);
+  }
+}
+
+function restart() {
+  clearTimeout(cpuTimer);
+  state.board.fill(null);
+  state.current = 'X';
+  state.gameOver = false;
+  state.cpuThinking = false;
+  cells.forEach((c) => c.classList.remove('win'));
+  render(null);
+}
+
+function resetScores() {
+  state.scores = { X: 0, O: 0, draw: 0 };
+  restart();
+}
+
+// ---------- Rendering ----------
+
+function statusText(result) {
+  if (result === 'draw') return 'Draw! Pass the salsa.';
+  if (result) {
+    if (state.mode === 'cpu') return result.winner === HUMAN ? 'You win! ¡Olé! 🎉' : 'The Computer wins!';
+    return `${NAMES[result.winner]}s win! ¡Olé! 🎉`;
+  }
+  if (state.cpuThinking) return 'Computer is cooking…';
+  if (state.mode === 'cpu') return 'Your turn: place a taco';
+  return `${NAMES[state.current]}'s turn`;
+}
+
+function render(result) {
+  state.board.forEach((mark, i) => {
+    const cell = cells[i];
+    // Only redraw when the mark changes, so the "plop" animation plays once
+    if ((cell.dataset.mark || '') !== (mark || '')) {
+      cell.innerHTML = mark ? PIECES[mark] : '';
+      cell.dataset.mark = mark || '';
+    }
+    cell.disabled = Boolean(mark) || state.gameOver || state.cpuThinking;
+    const row = Math.floor(i / 3) + 1;
+    const col = (i % 3) + 1;
+    const what = mark ? NAMES[mark].toLowerCase() : 'empty';
+    cell.setAttribute('aria-label', `Row ${row}, column ${col}, ${what}`);
+  });
+
+  statusEl.textContent = statusText(result);
+
+  document.getElementById('score-x').textContent = state.scores.X;
+  document.getElementById('score-o').textContent = state.scores.O;
+  document.getElementById('score-draw').textContent = state.scores.draw;
+  document.getElementById('score-x-label').textContent = state.mode === 'cpu' ? 'You (Tacos)' : 'Tacos';
+  document.getElementById('score-o-label').textContent = state.mode === 'cpu' ? 'CPU (Tortillas)' : 'Tortillas';
+}
+
+// ---------- Setup ----------
+
+function init() {
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('button');
+    cell.className = 'cell';
+    cell.type = 'button';
+    cell.addEventListener('click', () => handleCellClick(i));
+    boardEl.appendChild(cell);
+    cells.push(cell);
+  }
+
+  modeEl.addEventListener('change', () => {
+    state.mode = modeEl.value;
+    difficultyWrap.hidden = state.mode !== 'cpu';
+    resetScores();
+  });
+
+  difficultyEl.addEventListener('change', () => {
+    state.difficulty = difficultyEl.value;
+    restart();
+  });
+
+  document.getElementById('restart').addEventListener('click', restart);
+  document.getElementById('reset-scores').addEventListener('click', resetScores);
+
+  // Browsers may restore <select> values on reload, so sync state from them
+  state.mode = modeEl.value;
+  state.difficulty = difficultyEl.value;
+  difficultyWrap.hidden = state.mode !== 'cpu';
+
+  render(null);
+}
+
+init();
+  </script>
+</body>
+</html>
